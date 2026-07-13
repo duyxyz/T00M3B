@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "T001WEB",
+  title: "T00M3B",
   description: "Bộ công cụ tiện ích Web đa năng: Favicon Extractor và Screen Recorder.",
   icons: {
     icon: [

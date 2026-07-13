@@ -107,7 +107,7 @@ export default function Home() {
         <div className={styles.topBarLeft}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon-192.png" alt="Logo" className={styles.logo} />
-          <span className={styles.topBarTitle}>T001WEB</span>
+          <span className={styles.topBarTitle}>T00M3B</span>
         </div>
         <TabList
           selectedValue={activeTab}
