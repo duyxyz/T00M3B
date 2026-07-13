@@ -81,9 +81,10 @@ const useStyles = makeStyles({
   },
   title: {
     margin: '0 0 8px 0',
-    color: tokens.colorNeutralForeground1,
+    color: tokens.colorBrandForeground1,
     fontWeight: '700',
     fontSize: '32px',
+    fontFamily: 'var(--font-playwrite-nz), cursive',
   },
   subtitle: {
     margin: 0,
