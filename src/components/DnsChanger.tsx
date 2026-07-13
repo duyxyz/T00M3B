@@ -196,6 +196,9 @@ export default function DnsChanger({
   const [pingHost, setPingHost] = React.useState('');
   const [pingLoading, setPingLoading] = React.useState(false);
   const [pingResult, setPingResult] = React.useState<{ success: boolean; latency?: string; message?: string; details?: string[] } | null>(null);
+  
+  const [isRemoteServer, setIsRemoteServer] = React.useState(false);
+  const [manualAdapterName, setManualAdapterName] = React.useState('Wi-Fi');
 
   const handlePingTest = async () => {
     if (!pingHost.trim()) return;
@@ -218,29 +221,28 @@ export default function DnsChanger({
 
   const fetchAdapters = async () => {
     setLoading(true);
+    setIsRemoteServer(false);
     try {
       const res = await fetch('/api/dns');
       if (res.ok) {
         const data = await res.json();
-        setAdapters(data);
-        // Automatically select the first adapter with configured DNS or WiFi
-        if (data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
+          setAdapters(data);
+          // Automatically select the first adapter with configured DNS or WiFi
           const wifiOrActive = data.find((a: any) => 
             a.interfaceAlias.toLowerCase().includes('wifi') || 
             a.interfaceAlias.toLowerCase().includes('wi-fi') || 
             a.serverAddresses.length > 0
           );
           setSelectedAdapterIndex(wifiOrActive ? wifiOrActive.interfaceIndex : data[0].interfaceIndex);
+        } else {
+          setIsRemoteServer(true);
         }
+      } else {
+        setIsRemoteServer(true);
       }
     } catch (e) {
-      dispatchToast(
-        <Toast>
-          <ToastTitle>Lỗi</ToastTitle>
-          <ToastBody>Không thể lấy danh sách card mạng.</ToastBody>
-        </Toast>,
-        { intent: 'error' }
-      );
+      setIsRemoteServer(true);
     } finally {
       setLoading(false);
     }
@@ -345,12 +347,16 @@ export default function DnsChanger({
 
   // Helper to generate the manual PowerShell command
   const getPowerShellCommand = () => {
-    if (selectedAdapterIndex === null) return '';
+    const targetIdentifier = isRemoteServer 
+      ? `-InterfaceAlias "${manualAdapterName}"` 
+      : `-InterfaceIndex ${selectedAdapterIndex}`;
+
+    if (!isRemoteServer && selectedAdapterIndex === null) return '';
     if (selectedPresetIndex === 'dhcp') {
-      return `Set-DnsClientServerAddress -InterfaceIndex ${selectedAdapterIndex} -ResetServerAddresses`;
+      return `Set-DnsClientServerAddress ${targetIdentifier} -ResetServerAddresses`;
     }
     const dnsStr = secondaryDns ? `"${primaryDns}","${secondaryDns}"` : `"${primaryDns}"`;
-    return `Set-DnsClientServerAddress -InterfaceIndex ${selectedAdapterIndex} -ServerAddresses (${dnsStr})`;
+    return `Set-DnsClientServerAddress ${targetIdentifier} -ServerAddresses (${dnsStr})`;
   };
 
   const copyCommand = () => {
@@ -375,7 +381,8 @@ export default function DnsChanger({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Change-DNS-${currentAdapter?.interfaceAlias || 'Adapter'}.bat`;
+    const name = isRemoteServer ? manualAdapterName : (currentAdapter?.interfaceAlias || 'Adapter');
+    a.download = `Change-DNS-${name}.bat`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -400,7 +407,20 @@ export default function DnsChanger({
               />
             </div>
 
-            {loading ? (
+            {isRemoteServer ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <Caption1 style={{ fontWeight: '600' }}>Tên card mạng trên máy tính của bạn:</Caption1>
+                <Input
+                  value={manualAdapterName}
+                  onChange={(e, data) => setManualAdapterName(data.value)}
+                  placeholder="Ví dụ: Wi-Fi hoặc Ethernet"
+                  style={{ width: '100%' }}
+                />
+                <Caption1 style={{ color: tokens.colorNeutralForeground4 }}>
+                  * Vì ứng dụng chạy online, bạn có thể tự nhập tên card mạng để tạo file script .bat chính xác nhất.
+                </Caption1>
+              </div>
+            ) : loading ? (
               <Spinner label="Đang quét card mạng..." size="medium" />
             ) : (
               <Dropdown
@@ -467,15 +487,21 @@ export default function DnsChanger({
               </div>
             </div>
 
-            <Button
-              appearance="primary"
-              icon={<SettingsRegular />}
-              onClick={applyDns}
-              disabled={submitting || selectedAdapterIndex === null || (!primaryDns && selectedPresetIndex !== 'dhcp')}
-              size="large"
-            >
-              {submitting ? 'Đang thực hiện...' : 'Áp dụng thiết lập'}
-            </Button>
+            {isRemoteServer ? (
+              <div style={{ padding: '8px 12px', border: `1px solid ${tokens.colorNeutralStroke2}`, borderRadius: tokens.borderRadiusMedium, backgroundColor: tokens.colorNeutralBackground1, fontSize: '12px', color: tokens.colorNeutralForeground3, lineHeight: '1.4' }}>
+                💡 <b>Mẹo chạy online:</b> Chọn Preset DNS mong muốn ở cột bên phải, sau đó tải file <b>.bat</b> hoặc copy lệnh <b>PowerShell</b> để chạy trực tiếp trên máy tính của bạn.
+              </div>
+            ) : (
+              <Button
+                appearance="primary"
+                icon={<SettingsRegular />}
+                onClick={applyDns}
+                disabled={submitting || selectedAdapterIndex === null || (!primaryDns && selectedPresetIndex !== 'dhcp')}
+                size="large"
+              >
+                {submitting ? 'Đang thực hiện...' : 'Áp dụng thiết lập'}
+              </Button>
+            )}
           </div>
 
           {/* New Dedicated Ping Test Card */}
@@ -557,7 +583,7 @@ export default function DnsChanger({
             </div>
           </div>
 
-          {selectedAdapterIndex !== null && (selectedPresetIndex !== null) && (
+          {(isRemoteServer || (selectedAdapterIndex !== null)) && (selectedPresetIndex !== null) && (
             <div className={styles.sectionCard}>
               <Subtitle2>Không đổi được trực tiếp hoặc thiếu quyền?</Subtitle2>
               <div style={{ fontSize: '13px', color: tokens.colorNeutralForeground2, lineHeight: '1.4' }}>
