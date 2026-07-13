@@ -10,7 +10,6 @@ import {
   Subtitle1,
   Subtitle2,
   Caption1,
-  Divider,
   Input,
   Toast,
   ToastTitle,
@@ -22,13 +21,12 @@ import {
   ColorRegular,
   CopyRegular,
   HistoryRegular,
-  CheckmarkRegular,
   ImageRegular,
 } from '@fluentui/react-icons';
 
 const useStyles = makeStyles({
   container: {
-    maxWidth: '680px',
+    maxWidth: '1200px',
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -49,20 +47,49 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground3,
     fontSize: '15px',
   },
-  card: {
+  twoColumnLayout: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '32px',
+    alignItems: 'start',
+    '@media (max-width: 860px)': {
+      gridTemplateColumns: '1fr',
+    },
+  },
+  columnLeft: {
     display: 'flex',
     flexDirection: 'column',
     gap: '20px',
   },
+  columnRight: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+  },
+  sectionCard: {
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderRadius: tokens.borderRadiusXLarge,
+    ...shorthands.padding('20px'),
+    ...shorthands.border('1px', 'solid', tokens.colorNeutralStroke2),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  sectionTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '4px',
+  },
   pickerSection: {
     display: 'flex',
-    gap: '24px',
+    gap: '20px',
     alignItems: 'center',
     flexWrap: 'wrap',
   },
   previewSquare: {
-    width: '100px',
-    height: '100px',
+    width: '80px',
+    height: '80px',
     borderRadius: tokens.borderRadiusLarge,
     ...shorthands.border('1px', 'solid', tokens.colorNeutralStroke2),
     boxShadow: tokens.shadow8,
@@ -82,12 +109,13 @@ const useStyles = makeStyles({
   formatRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '10px',
   },
   formatLabel: {
-    width: '50px',
+    width: '42px',
     fontWeight: '600',
     color: tokens.colorNeutralForeground3,
+    fontSize: '13px',
   },
   harmonySection: {
     display: 'flex',
@@ -96,8 +124,8 @@ const useStyles = makeStyles({
   },
   harmonyGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-    gap: '12px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+    gap: '10px',
   },
   harmonyItem: {
     display: 'flex',
@@ -145,12 +173,11 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    marginTop: '8px',
   },
   imageWrapper: {
     width: '100%',
     aspectRatio: '16/9',
-    backgroundColor: tokens.colorNeutralBackground2,
+    backgroundColor: tokens.colorNeutralBackground3,
     ...shorthands.border('2px', 'solid', tokens.colorNeutralStroke2),
     borderRadius: tokens.borderRadiusLarge,
     overflow: 'hidden',
@@ -478,266 +505,275 @@ export default function ColorPicker({
         </Subtitle1>
       </div>
 
-      <div className={styles.card}>
-        {/* Main Pick Section */}
-        <div className={styles.pickerSection}>
-          <div
-            className={styles.previewSquare}
-            style={{ backgroundColor: color }}
-          />
+      <div className={styles.twoColumnLayout}>
+        {/* ===== LEFT COLUMN ===== */}
+        <div className={styles.columnLeft}>
+          {/* Pick color section */}
+          <div className={styles.sectionCard}>
+            <div className={styles.pickerSection}>
+              <div
+                className={styles.previewSquare}
+                style={{ backgroundColor: color }}
+              />
+              <div className={styles.pickerActions}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {isEyeDropperSupported ? (
+                    <Button
+                      appearance="primary"
+                      icon={<ColorRegular />}
+                      onClick={handlePickColor}
+                      size="large"
+                    >
+                      Chọn màu từ màn hình
+                    </Button>
+                  ) : (
+                    <Button
+                      appearance="primary"
+                      icon={<ColorRegular />}
+                      disabled
+                      size="large"
+                    >
+                      Chưa hỗ trợ (Eye Dropper)
+                    </Button>
+                  )}
 
-          <div className={styles.pickerActions}>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {isEyeDropperSupported ? (
-                <Button
-                  appearance="primary"
-                  icon={<ColorRegular />}
-                  onClick={handlePickColor}
-                  size="large"
-                >
-                  Chọn màu từ màn hình
-                </Button>
-              ) : (
-                <Button
-                  appearance="primary"
-                  icon={<ColorRegular />}
-                  disabled
-                  size="large"
-                >
-                  Chưa hỗ trợ kính lúp (Eye Dropper)
-                </Button>
-              )}
+                  {/* Standard HTML Color input fallback */}
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setColor(val);
+                        setHistory(prev => {
+                          const filtered = prev.filter(c => c.toLowerCase() !== val.toLowerCase());
+                          return [val, ...filtered.slice(0, 7)];
+                        });
+                      }}
+                      style={{
+                        position: 'absolute',
+                        opacity: 0,
+                        width: '100%',
+                        height: '100%',
+                        left: 0,
+                        top: 0,
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <Button icon={<ImageRegular />} size="large">
+                      Chọn màu thủ công
+                    </Button>
+                  </div>
+                </div>
 
-              {/* Standard HTML Color input fallback */}
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setColor(val);
-                    setHistory(prev => {
-                      const filtered = prev.filter(c => c.toLowerCase() !== val.toLowerCase());
-                      return [val, ...filtered.slice(0, 7)];
-                    });
-                  }}
-                  style={{
-                    position: 'absolute',
-                    opacity: 0,
-                    width: '100%',
-                    height: '100%',
-                    left: 0,
-                    top: 0,
-                    cursor: 'pointer',
-                  }}
-                />
-                <Button icon={<ImageRegular />} size="large">
-                  Chọn màu thủ công
-                </Button>
+                <Caption1 style={{ color: tokens.colorNeutralForeground4 }}>
+                  * Eye Dropper hỗ trợ đầy đủ trên Chrome, Edge, Opera. Bấm chọn màu bất cứ đâu trên màn hình.
+                </Caption1>
               </div>
             </div>
+          </div>
 
-            <Caption1 style={{ color: tokens.colorNeutralForeground4 }}>
-              * Eye Dropper hỗ trợ đầy đủ trên Chrome, Edge, Opera. Bấm chọn màu bất cứ đâu trên màn hình.
-            </Caption1>
+          {/* Image upload section */}
+          <div className={styles.sectionCard}>
+            <div className={styles.imageZone}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <Subtitle2>Lấy mã màu từ ảnh của bạn:</Subtitle2>
+                {imageUrl && (
+                  <Checkbox
+                    label="Bật chế độ thu phóng (Zoom)"
+                    checked={enableZoom}
+                    onChange={(e, data) => {
+                      const val = !!data.checked;
+                      setEnableZoom(val);
+                      if (!val) {
+                        setTransform({ zoom: 1, x: 0, y: 0 });
+                      }
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className={styles.imageWrapper}>
+                {!imageUrl ? (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{
+                        position: 'absolute',
+                        opacity: 0,
+                        width: '100%',
+                        height: '100%',
+                        left: 0,
+                        top: 0,
+                        zIndex: 2,
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <div className={styles.dropzone}>
+                      <ImageRegular fontSize={36} />
+                      <span style={{ fontWeight: '500' }}>Tải ảnh lên hoặc Click để chọn ảnh</span>
+                      <Caption1>Hỗ trợ định dạng PNG, JPG, WEBP, SVG</Caption1>
+                    </div>
+                  </>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    ref={imageRef}
+                    src={imageUrl}
+                    alt="Màu từ ảnh"
+                    className={styles.uploadedImage}
+                    style={{
+                      transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
+                      transformOrigin: '0 0',
+                      transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                    }}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    draggable={false}
+                  />
+                )}
+              </div>
+              {imageUrl && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap', gap: '12px' }}>
+                  <Caption1 style={{ color: tokens.colorNeutralForeground4 }}>
+                    {enableZoom
+                      ? '* Click lấy màu. Kéo chuột để di chuyển ảnh (khi phóng to).'
+                      : '* Click trực tiếp lên bất kỳ điểm nào trên ảnh để lấy mã màu.'}
+                  </Caption1>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Caption1 style={{ fontWeight: '600', color: enableZoom ? tokens.colorNeutralForeground1 : tokens.colorNeutralForeground4 }}>
+                      Zoom: {transform.zoom}x
+                    </Caption1>
+                    <Slider
+                      min={1}
+                      max={10}
+                      disabled={!enableZoom}
+                      value={transform.zoom}
+                      onChange={(e, data) => {
+                        const z = data.value;
+                        setTransform(prev => {
+                          if (z === 1) {
+                            return { zoom: 1, x: 0, y: 0 };
+                          }
+                          const container = imageRef.current?.parentElement;
+                          if (!container) return { ...prev, zoom: z };
+                          const rect = container.getBoundingClientRect();
+                          const cx = rect.width / 2;
+                          const cy = rect.height / 2;
+                          const newX = cx - (cx - prev.x) * (z / prev.zoom);
+                          const newY = cy - (cy - prev.y) * (z / prev.zoom);
+                          return { zoom: z, x: newX, y: newY };
+                        });
+                      }}
+                      style={{ width: '100px' }}
+                    />
+                    <Button size="small" onClick={() => { setImageUrl(null); setTransform({ zoom: 1, x: 0, y: 0 }); setEnableZoom(false); }}>
+                      Xóa ảnh
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className={styles.imageZone}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <Subtitle2>Lấy mã màu từ ảnh của bạn:</Subtitle2>
-            {imageUrl && (
-              <Checkbox
-                label="Bật chế độ thu phóng (Zoom)"
-                checked={enableZoom}
-                onChange={(e, data) => {
-                  const val = !!data.checked;
-                  setEnableZoom(val);
-                  if (!val) {
-                    setTransform({ zoom: 1, x: 0, y: 0 });
-                  }
-                }}
-              />
-            )}
-          </div>
-          
-          <div className={styles.imageWrapper}>
-            {!imageUrl ? (
-              <>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{
-                    position: 'absolute',
-                    opacity: 0,
-                    width: '100%',
-                    height: '100%',
-                    left: 0,
-                    top: 0,
-                    zIndex: 2,
-                    cursor: 'pointer',
-                  }}
+        {/* ===== RIGHT COLUMN ===== */}
+        <div className={styles.columnRight}>
+          {/* Color Formats */}
+          <div className={styles.sectionCard}>
+            <div className={styles.formatsGrid}>
+              <Subtitle2>Các định dạng mã màu:</Subtitle2>
+
+              <div className={styles.formatRow}>
+                <span className={styles.formatLabel}>HEX</span>
+                <Input
+                  readOnly
+                  value={color.toUpperCase()}
+                  style={{ fontFamily: 'monospace', flexGrow: 1 }}
                 />
-                <div className={styles.dropzone}>
-                  <ImageRegular fontSize={36} />
-                  <span style={{ fontWeight: '500' }}>Tải ảnh lên hoặc Click để chọn ảnh</span>
-                  <Caption1>Hỗ trợ định dạng PNG, JPG, WEBP, SVG</Caption1>
+                <Button
+                  icon={<CopyRegular />}
+                  onClick={() => copyVal(color.toUpperCase(), 'HEX')}
+                />
+              </div>
+
+              <div className={styles.formatRow}>
+                <span className={styles.formatLabel}>RGB</span>
+                <Input
+                  readOnly
+                  value={rgbString}
+                  style={{ fontFamily: 'monospace', flexGrow: 1 }}
+                />
+                <Button
+                  icon={<CopyRegular />}
+                  onClick={() => copyVal(rgbString, 'RGB')}
+                />
+              </div>
+
+              <div className={styles.formatRow}>
+                <span className={styles.formatLabel}>HSL</span>
+                <Input
+                  readOnly
+                  value={hslString}
+                  style={{ fontFamily: 'monospace', flexGrow: 1 }}
+                />
+                <Button
+                  icon={<CopyRegular />}
+                  onClick={() => copyVal(hslString, 'HSL')}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* History */}
+          {history.length > 0 && (
+            <div className={styles.sectionCard}>
+              <div className={styles.historySection}>
+                <div className={styles.sectionTitle}>
+                  <HistoryRegular fontSize={18} />
+                  <Subtitle2>Lịch sử lấy màu gần đây:</Subtitle2>
                 </div>
-              </>
-            ) : (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                ref={imageRef}
-                src={imageUrl}
-                alt="Màu từ ảnh"
-                className={styles.uploadedImage}
-                style={{
-                  transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
-                  transformOrigin: '0 0',
-                  transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                draggable={false}
-              />
-            )}
-          </div>
-          {imageUrl && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap', gap: '12px' }}>
-              <Caption1 style={{ color: tokens.colorNeutralForeground4 }}>
-                {enableZoom
-                  ? '* Click lấy màu. Kéo chuột để di chuyển ảnh (khi phóng to).'
-                  : '* Click trực tiếp lên bất kỳ điểm nào trên ảnh để lấy mã màu.'}
-              </Caption1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Caption1 style={{ fontWeight: '600', color: enableZoom ? tokens.colorNeutralForeground1 : tokens.colorNeutralForeground4 }}>
-                  Zoom: {transform.zoom}x
-                </Caption1>
-                <Slider
-                  min={1}
-                  max={10}
-                  disabled={!enableZoom}
-                  value={transform.zoom}
-                  onChange={(e, data) => {
-                    const z = data.value;
-                    setTransform(prev => {
-                      if (z === 1) {
-                        return { zoom: 1, x: 0, y: 0 };
-                      }
-                      const container = imageRef.current?.parentElement;
-                      if (!container) return { ...prev, zoom: z };
-                      const rect = container.getBoundingClientRect();
-                      const cx = rect.width / 2;
-                      const cy = rect.height / 2;
-                      const newX = cx - (cx - prev.x) * (z / prev.zoom);
-                      const newY = cy - (cy - prev.y) * (z / prev.zoom);
-                      return { zoom: z, x: newX, y: newY };
-                    });
-                  }}
-                  style={{ width: '100px' }}
-                />
-                <Button size="small" onClick={() => { setImageUrl(null); setTransform({ zoom: 1, x: 0, y: 0 }); setEnableZoom(false); }}>
-                  Xóa ảnh
-                </Button>
+                <div className={styles.historyGrid}>
+                  {history.map((c, i) => (
+                    <div
+                      key={`${c}-${i}`}
+                      className={styles.historyBubble}
+                      style={{ backgroundColor: c }}
+                      onClick={() => selectColor(c)}
+                      title={c.toUpperCase()}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
-        </div>
 
-        <Divider />
-
-        {/* Color Formats */}
-        <div className={styles.formatsGrid}>
-          <Subtitle2>Các định dạng mã màu:</Subtitle2>
-          
-          <div className={styles.formatRow}>
-            <span className={styles.formatLabel}>HEX</span>
-            <Input
-              readOnly
-              value={color.toUpperCase()}
-              style={{ fontFamily: 'monospace', flexGrow: 1 }}
-            />
-            <Button
-              icon={<CopyRegular />}
-              onClick={() => copyVal(color.toUpperCase(), 'HEX')}
-            />
-          </div>
-
-          <div className={styles.formatRow}>
-            <span className={styles.formatLabel}>RGB</span>
-            <Input
-              readOnly
-              value={rgbString}
-              style={{ fontFamily: 'monospace', flexGrow: 1 }}
-            />
-            <Button
-              icon={<CopyRegular />}
-              onClick={() => copyVal(rgbString, 'RGB')}
-            />
-          </div>
-
-          <div className={styles.formatRow}>
-            <span className={styles.formatLabel}>HSL</span>
-            <Input
-              readOnly
-              value={hslString}
-              style={{ fontFamily: 'monospace', flexGrow: 1 }}
-            />
-            <Button
-              icon={<CopyRegular />}
-              onClick={() => copyVal(hslString, 'HSL')}
-            />
-          </div>
-        </div>
-
-        {/* History */}
-        {history.length > 0 && (
-          <>
-            <Divider />
-            <div className={styles.historySection}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <HistoryRegular fontSize={18} />
-                <Subtitle2>Lịch sử lấy màu gần đây:</Subtitle2>
-              </div>
-              <div className={styles.historyGrid}>
-                {history.map((c, i) => (
+          {/* Color Harmony suggestions */}
+          <div className={styles.sectionCard}>
+            <div className={styles.harmonySection}>
+              <Subtitle2>Gợi ý bảng phối màu hài hòa:</Subtitle2>
+              <div className={styles.harmonyGrid}>
+                {harmonies.map((h, i) => (
                   <div
-                    key={`${c}-${i}`}
-                    className={styles.historyBubble}
-                    style={{ backgroundColor: c }}
-                    onClick={() => selectColor(c)}
-                    title={c.toUpperCase()}
-                  />
+                    key={i}
+                    className={styles.harmonyItem}
+                    onClick={() => selectColor(h.hex)}
+                    title={`Nhấn để chọn màu này: ${h.hex.toUpperCase()}`}
+                  >
+                    <div className={styles.harmonyColor} style={{ backgroundColor: h.hex }} />
+                    <Caption1 className={styles.harmonyLabel} style={{ fontWeight: '600' }}>
+                      {h.hex.toUpperCase()}
+                    </Caption1>
+                    <Caption1 style={{ fontSize: '10px', color: tokens.colorNeutralForeground4, textAlign: 'center' }}>
+                      {h.label.split(' ')[0]}
+                    </Caption1>
+                  </div>
                 ))}
               </div>
             </div>
-          </>
-        )}
-
-        <Divider />
-
-        {/* Color Harmony suggestions */}
-        <div className={styles.harmonySection}>
-          <Subtitle2>Gợi ý bảng phối màu hài hòa:</Subtitle2>
-          <div className={styles.harmonyGrid}>
-            {harmonies.map((h, i) => (
-              <div
-                key={i}
-                className={styles.harmonyItem}
-                onClick={() => selectColor(h.hex)}
-                title={`Nhấn để chọn màu này: ${h.hex.toUpperCase()}`}
-              >
-                <div className={styles.harmonyColor} style={{ backgroundColor: h.hex }} />
-                <Caption1 className={styles.harmonyLabel} style={{ fontWeight: '600' }}>
-                  {h.hex.toUpperCase()}
-                </Caption1>
-                <Caption1 style={{ fontSize: '10px', color: tokens.colorNeutralForeground4, textAlign: 'center' }}>
-                  {h.label.split(' ')[0]}
-                </Caption1>
-              </div>
-            ))}
           </div>
         </div>
       </div>
